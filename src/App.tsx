@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/layout/Layout';
 import Dashboard from './pages/Dashboard';
 import Clientes from './pages/Clientes';
+import PerfilCliente from './pages/PerfilCliente';
 import Servicos from './pages/Servicos';
 import Profissionais from './pages/Profissionais';
 import Agendamentos from './pages/Agendamentos';
@@ -16,6 +17,7 @@ export default function App() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="clientes" element={<Clientes />} />
+          <Route path="clientes/:id" element={<PerfilCliente />} />
           <Route path="servicos" element={<Servicos />} />
           <Route path="profissionais" element={<Profissionais />} />
           <Route path="agendamentos" element={<Agendamentos />} />
