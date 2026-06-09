@@ -17,14 +17,8 @@ export default function Header({ setMobileOpen }: HeaderProps) {
         return 'Clientes';
       case '/servicos':
         return 'Serviços';
-      case '/profissionais':
-        return 'Profissionais';
       case '/agendamentos':
         return 'Agendamentos';
-      case '/usuarios':
-        return 'Usuários';
-      case '/logs':
-        return 'Logs de Atividade';
       case '/configuracoes':
         return 'Configurações';
       default:

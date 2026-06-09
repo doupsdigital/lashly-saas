@@ -1,17 +1,14 @@
 import { useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { 
-  LayoutGrid, 
-  Users, 
-  Tag, 
-  Calendar, 
-  UserRound, 
-  Settings, 
-  List, 
-  ChevronLeft, 
+import {
+  LayoutGrid,
+  Users,
+  Tag,
+  Calendar,
+  Settings,
+  ChevronLeft,
   ChevronRight,
   LogOut,
-  Shield
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -24,7 +21,7 @@ interface SidebarProps {
 
 export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: SidebarProps) {
   const navigate = useNavigate();
-  const { profile, user, signOut, isAdmin } = useAuth();
+  const { profile, user, signOut } = useAuth();
 
   const handleSignOut = async () => {
     await signOut();
@@ -50,13 +47,10 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
     { name: 'Clientes', path: '/clientes', icon: Users },
     { name: 'Serviços', path: '/servicos', icon: Tag },
     { name: 'Agendamentos', path: '/agendamentos', icon: Calendar },
-    { name: 'Profissionais', path: '/profissionais', icon: UserRound },
   ];
 
   const systemItems = [
     { name: 'Configurações', path: '/configuracoes', icon: Settings },
-    ...(isAdmin ? [{ name: 'Usuários', path: '/usuarios', icon: Shield }] : []),
-    ...(isAdmin ? [{ name: 'Logs', path: '/logs', icon: List }] : []),
   ];
 
   const renderNavItems = (items: typeof menuItems) => {
