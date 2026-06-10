@@ -12,7 +12,6 @@ interface AuthContextType {
   isCliente: boolean;
   clienteId: string | null;
   loading: boolean;
-  isAdmin: boolean; // alias temporário → isProfissional (remove nas próximas etapas)
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -82,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user, profile, role, isProfissional, isCliente, clienteId,
-      loading, isAdmin: isProfissional, signIn, signOut, refreshProfile,
+      loading, signIn, signOut, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>

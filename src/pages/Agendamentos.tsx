@@ -57,7 +57,7 @@ const DIAS_SEMANA = [
 ];
 
 export default function Agendamentos() {
-  const { isAdmin } = useAuth();
+  const { isProfissional } = useAuth();
   const [viewMode, setViewMode] = useState<'mensal' | 'semanal' | 'diaria'>('semanal');
   const [currentDate, setCurrentDate] = useState<Date>(() => {
     const d = new Date();
@@ -1147,7 +1147,7 @@ export default function Agendamentos() {
                 )}
 
                 {/* Delete button (Admin only) */}
-                {isAdmin && (
+                {isProfissional && (
                   <button
                     onClick={() => handleDeleteAppointment(selectedAppt)}
                     className="flex items-center justify-center gap-1.5 py-2 w-full border border-border hover:bg-red-50 hover:text-red-600 text-text-secondary rounded-lg text-xs font-semibold cursor-pointer"
