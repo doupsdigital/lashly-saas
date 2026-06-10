@@ -36,6 +36,12 @@ export default function PortalLayout() {
   };
 
   const clientName = profile?.nome?.split(' ')[0] || 'Cliente';
+  const initials = (profile?.nome || 'Cliente')
+    .split(' ')
+    .map((n) => n[0] || '')
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
 
   return (
     <div className="min-h-screen bg-bg flex flex-col font-sans">
@@ -57,6 +63,17 @@ export default function PortalLayout() {
         </div>
 
         <div className="flex items-center gap-3">
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={clientName}
+              className="w-9 h-9 rounded-full object-cover border border-rose-200 flex-shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-full bg-rose-200 text-rose-800 flex items-center justify-center font-semibold text-sm flex-shrink-0">
+              {initials}
+            </div>
+          )}
           <span className="text-sm text-text-secondary hidden sm:block">
             Olá, <span className="font-semibold text-text-primary">{clientName}</span>
           </span>

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { User, Phone, Mail, Lock, ShieldAlert, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, Phone, Mail, Lock, ShieldAlert, Loader2, Sparkles, AlertCircle, Camera, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -16,8 +16,13 @@ function formatWhatsApp(value: string): string {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 export default function PortalPerfil() {
-  const { user, clienteId, refreshProfile } = useAuth();
+  const { user, profile, clienteId, refreshProfile } = useAuth();
 
+  // Seção 0: Foto de Perfil
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [erroAvatar, setErroAvatar] = useState<string | null>(null);
+  const [sucessoAvatar, setSucessoAvatar] = useState<string | null>(null);
 
   // Seção 1: Dados Pessoais
   const [nome, setNome] = useState('');
@@ -73,6 +78,73 @@ export default function PortalPerfil() {
   const handleWhatsappChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     setWhatsapp(formatWhatsApp(rawValue));
+  };
+
+  // Upload da foto de perfil para o Supabase Storage
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    setErroAvatar(null);
+    setSucessoAvatar(null);
+    setUploadingAvatar(true);
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `public/avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { cacheControl: '3600', upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('usuarios')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      setSucessoAvatar('Foto de perfil atualizada!');
+      await refreshProfile();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao enviar foto de perfil.';
+      setErroAvatar(msg);
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // Remover a foto de perfil
+  const handleRemoveAvatar = async () => {
+    if (!user?.id) return;
+    setErroAvatar(null);
+    setSucessoAvatar(null);
+    setUploadingAvatar(true);
+
+    try {
+      const { error } = await supabase
+        .from('usuarios')
+        .update({ avatar_url: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setSucessoAvatar('Foto de perfil removida.');
+      await refreshProfile();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Erro ao remover foto de perfil.';
+      setErroAvatar(msg);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   // Salvar Dados Pessoais
@@ -196,6 +268,14 @@ export default function PortalPerfil() {
     }
   };
 
+  const userName = profile?.nome || 'Cliente';
+  const initials = userName
+    .split(' ')
+    .map((n) => n[0] || '')
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+
   if (loadingDados) {
     return (
       <div className="space-y-6 max-w-2xl mx-auto">
@@ -223,6 +303,78 @@ export default function PortalPerfil() {
         <User className="w-8 h-8 text-rose-600" />
         <h1 className="font-title font-bold text-3xl text-text-primary">Meu Perfil</h1>
       </div>
+
+      {/* SEÇÃO 0: FOTO DE PERFIL */}
+      <section className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col items-center text-center">
+        {erroAvatar && (
+          <div className="flex items-center gap-2 p-4 mb-4 w-full bg-red-50 border border-red-200 rounded-xl text-sm text-red-800">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {erroAvatar}
+          </div>
+        )}
+
+        {sucessoAvatar && (
+          <div className="flex items-start gap-2.5 p-4 mb-4 w-full bg-green-50 border border-green-200 rounded-xl text-sm text-green-800">
+            <Sparkles className="w-4 h-4 shrink-0 mt-0.5 text-green-600" />
+            <span>{sucessoAvatar}</span>
+          </div>
+        )}
+
+        <div className="relative group">
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={userName}
+              className="w-28 h-28 rounded-full object-cover border-2 border-rose-200 shadow-md"
+            />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-rose-100 border-2 border-rose-200 text-rose-800 flex items-center justify-center font-title font-bold text-3xl shadow-sm">
+              {initials}
+            </div>
+          )}
+
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity cursor-pointer duration-200"
+          >
+            <Camera className="w-6 h-6" />
+          </button>
+        </div>
+
+        <h3 className="font-title font-bold text-lg text-text-primary mt-4 truncate w-full">
+          {userName}
+        </h3>
+
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleAvatarUpload}
+          accept="image/*"
+          className="hidden"
+        />
+
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-6">
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploadingAvatar}
+            className="flex items-center justify-center gap-1.5 px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+          >
+            <Camera className="w-4 h-4" />
+            {uploadingAvatar ? 'Enviando...' : 'Alterar Foto'}
+          </button>
+          {profile?.avatar_url && (
+            <button
+              onClick={handleRemoveAvatar}
+              disabled={uploadingAvatar}
+              className="flex items-center justify-center gap-1.5 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-800 text-xs font-semibold rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 className="w-4 h-4" />
+              Remover Foto
+            </button>
+          )}
+        </div>
+      </section>
 
       {/* SEÇÃO 1: DADOS PESSOAIS */}
       <section className="bg-white border border-border rounded-2xl shadow-sm overflow-hidden">
