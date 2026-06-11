@@ -149,7 +149,7 @@ export default function Dashboard() {
       });
 
       // 2. Fetch main tables data for the active period
-      const [clientsRes, apptsRes, atendsRes, pendingRes, todayRes] = await Promise.all([
+      const [clientsRes, apptsRes, concludedRes, pendingRes, todayRes] = await Promise.all([
         // Clients registered in the period
         supabase
           .from('clientes')
@@ -162,12 +162,16 @@ export default function Dashboard() {
           .select('id, data_hora, status')
           .gte('data_hora', startIso)
           .lte('data_hora', endIso),
-        // Atendimentos in the period
+        // Concluded appointments in the period (for revenue)
         supabase
-          .from('atendimentos')
-          .select('id, cliente_id, data_atendimento, valor_cobrado, servico_id')
-          .gte('data_atendimento', startDateStr)
-          .lte('data_atendimento', endDateStr),
+          .from('agendamentos')
+          .select(`
+            id, cliente_id, data_hora, valor_cobrado,
+            agendamento_servicos ( servico_id, valor_cobrado )
+          `)
+          .eq('status', 'concluido')
+          .gte('data_hora', startIso)
+          .lte('data_hora', endIso),
         // Pending appointments (all time)
         supabase
           .from('agendamentos')
@@ -189,11 +193,11 @@ export default function Dashboard() {
 
       if (clientsRes.error) throw clientsRes.error;
       if (apptsRes.error) throw apptsRes.error;
-      if (atendsRes.error) throw atendsRes.error;
+      if (concludedRes.error) throw concludedRes.error;
 
       const clientRecords = clientsRes.data || [];
       const apptRecords = apptsRes.data || [];
-      const atendRecords = atendsRes.data || [];
+      const concludedRecords = concludedRes.data || [];
 
       setPendingAppointments(pendingRes.count ?? 0);
       setTodayAppointments(todayRes.data || []);
@@ -202,7 +206,7 @@ export default function Dashboard() {
       setTotalClients(clientRecords.length);
       setTotalAppointments(apptRecords.length);
       
-      const earnedSum = atendRecords.reduce((sum, a) => sum + Number(a.valor_cobrado), 0);
+      const earnedSum = concludedRecords.reduce((sum, a) => sum + Number(a.valor_cobrado || 0), 0);
       setTotalEarned(earnedSum);
 
       // --- Chart 1: Revenue over time ---
@@ -218,9 +222,10 @@ export default function Dashboard() {
           current.setDate(current.getDate() + 1);
         }
 
-        atendRecords.forEach(a => {
-          if (dailyMap.has(a.data_atendimento)) {
-            dailyMap.set(a.data_atendimento, dailyMap.get(a.data_atendimento)! + Number(a.valor_cobrado));
+        concludedRecords.forEach(a => {
+          const dateStr = formatDateStr(new Date(a.data_hora));
+          if (dailyMap.has(dateStr)) {
+            dailyMap.set(dateStr, dailyMap.get(dateStr)! + Number(a.valor_cobrado || 0));
           }
         });
 
@@ -244,10 +249,10 @@ export default function Dashboard() {
           current.setMonth(current.getMonth() + 1);
         }
 
-        atendRecords.forEach(a => {
-          const mKey = a.data_atendimento.substring(0, 7);
+        concludedRecords.forEach(a => {
+          const mKey = formatDateStr(new Date(a.data_hora)).substring(0, 7);
           if (monthlyMap.has(mKey)) {
-            monthlyMap.set(mKey, monthlyMap.get(mKey)! + Number(a.valor_cobrado));
+            monthlyMap.set(mKey, monthlyMap.get(mKey)! + Number(a.valor_cobrado || 0));
           }
         });
 
@@ -284,31 +289,32 @@ export default function Dashboard() {
       ]);
 
       // --- Chart 3: Clients new vs recurrent ---
-      const uniqueClientIds = [...new Set(atendRecords.map(a => a.cliente_id))];
+      const uniqueClientIds = [...new Set(concludedRecords.map(a => a.cliente_id))];
       let recurrentSet = new Set<string>();
 
       if (uniqueClientIds.length > 0) {
-        // Query if they have atendimentos before startDateStr
-        const { data: pastAtends, error: pastError } = await supabase
-          .from('atendimentos')
+        // Query if they have concluded appointments before the period start
+        const { data: pastConcluded, error: pastError } = await supabase
+          .from('agendamentos')
           .select('cliente_id')
+          .eq('status', 'concluido')
           .in('cliente_id', uniqueClientIds)
-          .lt('data_atendimento', startDateStr);
+          .lt('data_hora', startIso);
 
         if (pastError) throw pastError;
-        pastAtends?.forEach(p => recurrentSet.add(p.cliente_id));
+        pastConcluded?.forEach(p => recurrentSet.add(p.cliente_id));
       }
 
       // Map client absolute first visit in the period or past
       const clientFirstDate = new Map<string, string>();
-      atendRecords.forEach(a => {
-        // If they had a past visit, their absolute first visit is in the past
+      concludedRecords.forEach(a => {
+        const dateStr = formatDateStr(new Date(a.data_hora));
         if (recurrentSet.has(a.cliente_id)) {
           clientFirstDate.set(a.cliente_id, 'past');
         } else {
           const cur = clientFirstDate.get(a.cliente_id);
-          if (!cur || a.data_atendimento < cur) {
-            clientFirstDate.set(a.cliente_id, a.data_atendimento);
+          if (!cur || dateStr < cur) {
+            clientFirstDate.set(a.cliente_id, dateStr);
           }
         }
       });
@@ -323,11 +329,12 @@ export default function Dashboard() {
           current.setDate(current.getDate() + 1);
         }
 
-        atendRecords.forEach(a => {
-          const slot = slotsMap.get(a.data_atendimento);
+        concludedRecords.forEach(a => {
+          const dateStr = formatDateStr(new Date(a.data_hora));
+          const slot = slotsMap.get(dateStr);
           if (slot) {
             const first = clientFirstDate.get(a.cliente_id);
-            if (first === a.data_atendimento) {
+            if (first === dateStr) {
               slot.Novos.add(a.cliente_id);
             } else {
               slot.Recorrentes.add(a.cliente_id);
@@ -352,12 +359,12 @@ export default function Dashboard() {
         const slotsMap = new Map<string, { Novos: Set<string>; Recorrentes: Set<string> }>();
         weeks.forEach(w => slotsMap.set(w, { Novos: new Set(), Recorrentes: new Set() }));
 
-        atendRecords.forEach(a => {
-          const wLabel = getWeekLabel(new Date(a.data_atendimento + 'T12:00:00'), start);
+        concludedRecords.forEach(a => {
+          const dateStr = formatDateStr(new Date(a.data_hora));
+          const wLabel = getWeekLabel(new Date(a.data_hora), start);
           const slot = slotsMap.get(wLabel) || slotsMap.get('Semana 4')!;
           
           const first = clientFirstDate.get(a.cliente_id);
-          // Determine if they are new in this week (first ever visit falls in this week)
           const isFirstVisitInThisWeek = first !== 'past' && getWeekLabel(new Date(first! + 'T12:00:00'), start) === wLabel;
 
           if (isFirstVisitInThisWeek) {
@@ -382,8 +389,8 @@ export default function Dashboard() {
           current.setMonth(current.getMonth() + 1);
         }
 
-        atendRecords.forEach(a => {
-          const mKey = a.data_atendimento.substring(0, 7);
+        concludedRecords.forEach(a => {
+          const mKey = formatDateStr(new Date(a.data_hora)).substring(0, 7);
           const slot = slotsMap.get(mKey);
           if (slot) {
             const first = clientFirstDate.get(a.cliente_id);
@@ -414,9 +421,11 @@ export default function Dashboard() {
 
       // --- Chart 4: Top 8 services performed ---
       const srvMapCounts = new Map<string, number>();
-      atendRecords.forEach(a => {
-        const sName = serviceMap.get(a.servico_id)?.nome || 'Serviço Excluído/Desconhecido';
-        srvMapCounts.set(sName, (srvMapCounts.get(sName) || 0) + 1);
+      concludedRecords.forEach(a => {
+        (a.agendamento_servicos || []).forEach((as: any) => {
+          const sName = serviceMap.get(as.servico_id)?.nome || 'Serviço Excluído/Desconhecido';
+          srvMapCounts.set(sName, (srvMapCounts.get(sName) || 0) + 1);
+        });
       });
 
       const topServices = Array.from(srvMapCounts.entries())
@@ -429,9 +438,11 @@ export default function Dashboard() {
 
       // --- Chart 5: Revenue by service category ---
       const catMapRevenue = new Map<string, number>();
-      atendRecords.forEach(a => {
-        const catName = serviceMap.get(a.servico_id)?.categoriaNome || 'Sem Categoria';
-        catMapRevenue.set(catName, (catMapRevenue.get(catName) || 0) + Number(a.valor_cobrado));
+      concludedRecords.forEach(a => {
+        (a.agendamento_servicos || []).forEach((as: any) => {
+          const catName = serviceMap.get(as.servico_id)?.categoriaNome || 'Sem Categoria';
+          catMapRevenue.set(catName, (catMapRevenue.get(catName) || 0) + Number(as.valor_cobrado || 0));
+        });
       });
 
       setRevenueCategoryData(

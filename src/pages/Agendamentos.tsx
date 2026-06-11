@@ -79,6 +79,12 @@ export default function Agendamentos() {
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Conclude Modal States
+  const [concludeAppt, setConcludeAppt] = useState<AgendamentoWithRelations | null>(null);
+  const [concludeUseCustom, setConcludeUseCustom] = useState(false);
+  const [concludeCustomValue, setConcludeCustomValue] = useState(0);
+  const [concludeSaving, setConcludeSaving] = useState(false);
+
   // Confirm Modal States
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -546,18 +552,66 @@ export default function Agendamentos() {
     }
   };
 
+  // Open the conclude modal (instead of the generic confirm)
+  const handleOpenConcludeModal = (appt: AgendamentoWithRelations) => {
+    const total = appt.agendamento_servicos?.reduce((sum, s) => sum + Number(s.valor_cobrado || 0), 0) || 0;
+    setConcludeAppt(appt);
+    setConcludeUseCustom(false);
+    setConcludeCustomValue(total);
+    setConcludeSaving(false);
+  };
+
+  // Confirm conclusion: save status + valor_cobrado
+  const handleConcludeConfirm = async () => {
+    if (!concludeAppt) return;
+    const appt = concludeAppt;
+    const clientName = appt.cliente ? `${appt.cliente.nome} ${appt.cliente.sobrenome}` : 'Cliente';
+    const totalServicos = appt.agendamento_servicos?.reduce((sum, s) => sum + Number(s.valor_cobrado || 0), 0) || 0;
+    const valorFinal = concludeUseCustom ? concludeCustomValue : totalServicos;
+
+    setConcludeSaving(true);
+    try {
+      const { error } = await supabase
+        .from('agendamentos')
+        .update({ status: 'concluido', valor_cobrado: valorFinal })
+        .eq('id', appt.id);
+
+      if (error) throw error;
+
+      const desconto = concludeUseCustom ? ` com valor recebido de R$ ${valorFinal.toFixed(2)}` : '';
+      await registrarLog(
+        'editou',
+        'agendamento',
+        appt.id,
+        `Concluiu atendimento de "${clientName}"${desconto}`
+      );
+
+      setConcludeAppt(null);
+      setIsDetailOpen(false);
+      showTemporarySuccess('Atendimento concluído com sucesso!');
+      fetchAppointments();
+    } catch (err) {
+      console.error(err);
+      showTemporaryError('Falha ao concluir atendimento.');
+    } finally {
+      setConcludeSaving(false);
+    }
+  };
+
   const handleChangeStatus = async (appt: AgendamentoWithRelations, newStatus: 'cancelado' | 'concluido') => {
-    const isCompleted = newStatus === 'concluido';
+    if (newStatus === 'concluido') {
+      handleOpenConcludeModal(appt);
+      return;
+    }
+
     const clientName = appt.cliente ? `${appt.cliente.nome} ${appt.cliente.sobrenome}` : 'Cliente';
     
     openConfirmModal({
-      title: isCompleted ? 'Concluir Atendimento?' : 'Cancelar Agendamento?',
-      description: isCompleted 
-        ? `Tem certeza que deseja marcar o atendimento de "${clientName}" como concluído?`
-        : `Tem certeza que deseja cancelar o agendamento de "${clientName}"?`,
-      confirmText: isCompleted ? 'Concluir' : 'Cancelar Agendamento',
+      title: 'Cancelar Agendamento?',
+      description: `Tem certeza que deseja cancelar o agendamento de "${clientName}"?`,
+      confirmText: 'Cancelar Agendamento',
       cancelText: 'Voltar',
-      type: isCompleted ? 'success' : 'warning',
+      type: 'warning',
       onConfirm: async () => {
         try {
           const { error } = await supabase
@@ -574,7 +628,7 @@ export default function Agendamentos() {
             `Alterou status do agendamento de "${clientName}" para "${newStatus}"`
           );
 
-          showTemporarySuccess(`Agendamento marcado como ${newStatus}!`);
+          showTemporarySuccess(`Agendamento cancelado!`);
           fetchAppointments();
         } catch (err) {
           console.error(err);
@@ -1161,6 +1215,136 @@ export default function Agendamentos() {
           </div>
         </div>
       )}
+
+      {/* CONCLUDE MODAL */}
+      {concludeAppt && (() => {
+        const totalServicos = concludeAppt.agendamento_servicos?.reduce((sum, s) => sum + Number(s.valor_cobrado || 0), 0) || 0;
+        const clientName = concludeAppt.cliente ? `${concludeAppt.cliente.nome} ${concludeAppt.cliente.sobrenome}` : 'Cliente';
+        return (
+          <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-[60] flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+            <div className="bg-white rounded-[14px] border border-border shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-green-50/30">
+                <h4 className="font-title font-semibold text-lg text-text-primary flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  Concluir Atendimento
+                </h4>
+                <button
+                  onClick={() => setConcludeAppt(null)}
+                  className="text-text-secondary hover:text-rose-600 cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-5">
+                {/* Client */}
+                <div className="text-sm text-text-primary">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-0.5">Cliente</span>
+                  <span className="font-semibold">{clientName}</span>
+                </div>
+
+                {/* Services summary */}
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-secondary block mb-1.5">Procedimentos</span>
+                  <div className="bg-bg/25 border border-border/60 p-3 rounded-lg space-y-1.5">
+                    {concludeAppt.agendamento_servicos?.map((s, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-xs text-text-primary">
+                        <span>
+                          {s.servico?.nome}
+                          {s.variacao?.nome && (
+                            <span className="text-[10px] bg-gold-light/40 text-gold border border-gold-light/60 px-1 py-0.5 rounded font-normal ml-1">
+                              {s.variacao.nome}
+                            </span>
+                          )}
+                        </span>
+                        <span className="font-semibold text-text-primary">
+                          R$ {Number(s.valor_cobrado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ))}
+                    <div className="border-t border-border/40 pt-1.5 mt-1.5 flex justify-between items-center text-sm font-bold text-text-primary">
+                      <span>Total</span>
+                      <span className="text-rose-800">
+                        R$ {totalServicos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custom value toggle */}
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 p-3 bg-bg/40 rounded-lg border border-border/60 cursor-pointer select-none hover:bg-bg/60 transition-colors">
+                    <input
+                      type="checkbox"
+                      checked={concludeUseCustom}
+                      onChange={(e) => {
+                        setConcludeUseCustom(e.target.checked);
+                        if (e.target.checked) setConcludeCustomValue(totalServicos);
+                      }}
+                      className="w-4 h-4 accent-rose-600 cursor-pointer"
+                    />
+                    <div>
+                      <span className="text-xs font-semibold text-text-primary">Valor recebido diferente?</span>
+                      <span className="text-[10px] text-text-muted block">Habilite se houve desconto ou valor negociado.</span>
+                    </div>
+                  </label>
+
+                  {concludeUseCustom && (
+                    <div className="space-y-1.5 animate-fade-in">
+                      <label className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
+                        Valor recebido (R$)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={concludeCustomValue}
+                        onChange={(e) => setConcludeCustomValue(parseFloat(e.target.value) || 0)}
+                        className="w-full px-3 py-2.5 border border-border rounded-lg bg-bg text-text-primary text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-green-400"
+                      />
+                      {concludeCustomValue < totalServicos && concludeCustomValue >= 0 && (
+                        <p className="text-[10px] text-amber-600 font-medium">
+                          Desconto de R$ {(totalServicos - concludeCustomValue).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} aplicado.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Final value summary */}
+                <div className="bg-green-50/50 border border-green-200/60 rounded-xl p-4 text-center">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-green-700 block mb-1">Valor a registrar</span>
+                  <span className="text-2xl font-title font-bold text-green-800">
+                    R$ {(concludeUseCustom ? concludeCustomValue : totalServicos).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => setConcludeAppt(null)}
+                    disabled={concludeSaving}
+                    className="px-4 py-2 border border-border rounded-lg text-xs font-medium text-text-secondary hover:bg-bg transition-colors cursor-pointer"
+                  >
+                    Voltar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConcludeConfirm}
+                    disabled={concludeSaving}
+                    className="px-5 py-2.5 bg-green-600 hover:bg-green-800 disabled:bg-green-300 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {concludeSaving ? 'Salvando...' : 'Concluir Atendimento'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* FORM MODAL (CREATE OR EDIT) */}
       {isModalOpen && (

@@ -91,6 +91,7 @@ CREATE TABLE agendamentos (
     CHECK (status IN ('pendente', 'confirmado', 'cancelado', 'concluido')),
   origem TEXT DEFAULT 'admin' CHECK (origem IN ('admin', 'portal')),
   observacoes TEXT,
+  valor_cobrado NUMERIC(10,2),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
