@@ -72,6 +72,29 @@ async function seed() {
   await supabase.from('logs').delete().neq('id', '00000000-0000-0000-0000-000000000000');
   console.log('Limpeza de dados concluída!');
 
+  // Re-inserir usuário profissional caso tenha sido deletado por CASCADE
+  const { data: userExists, error: checkError } = await supabase
+    .from('usuarios')
+    .select('id')
+    .eq('id', authData.user.id)
+    .maybeSingle();
+  
+  if (!userExists) {
+    console.log('Usuário profissional não encontrado em "usuarios". Re-inserindo...');
+    const { error: userInsertError } = await supabase.from('usuarios').insert({
+      id: authData.user.id,
+      nome: 'admin',
+      email: 'rosae@clinic.com',
+      role: 'profissional',
+      cliente_id: null
+    });
+    if (userInsertError) {
+      console.error('Erro ao re-inserir usuário profissional:', userInsertError.message);
+      return;
+    }
+    console.log('Usuário profissional re-inserido com sucesso!');
+  }
+
   // 2. Inserir Clientes
   console.log('Inserindo 25 clientes...');
   const clientRecords = [];

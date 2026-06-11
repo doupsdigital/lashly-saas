@@ -32,6 +32,29 @@ async function purge() {
     return;
   }
 
+  // Re-inserir usuário profissional caso tenha sido deletado por CASCADE
+  const { data: userExists, error: checkError } = await supabase
+    .from('usuarios')
+    .select('id')
+    .eq('id', authData.user.id)
+    .maybeSingle();
+  
+  if (!userExists) {
+    console.log('Usuário profissional não encontrado em "usuarios". Re-inserindo...');
+    const { error: userInsertError } = await supabase.from('usuarios').insert({
+      id: authData.user.id,
+      nome: 'admin',
+      email: 'rosae@clinic.com',
+      role: 'profissional',
+      cliente_id: null
+    });
+    if (userInsertError) {
+      console.error('Erro ao re-inserir usuário profissional:', userInsertError.message);
+      return;
+    }
+    console.log('Usuário profissional re-inserido com sucesso!');
+  }
+
   console.log('#############################################');
   console.log('   BANCO DE DADOS LIMPO COM SUCESSO!        ');
   console.log('   - Clientes, Agendamentos e Históricos    ');
