@@ -86,9 +86,27 @@ const menuItems = [
 
 ### B. Portal do Cliente Dinâmico (Por URL)
 As clientes agendarão acessando uma URL que identifica o estúdio:
-* **Estrutura por subcaminho:** `agendar.meusite.com/estudio-rosa`
-* **Estrutura por subdomínio:** `estudio-rosa.meusite.com`
-* O React lerá o parâmetro da URL (ex: `estudio-rosa`), fará uma chamada rápida ao Supabase buscando a linha na tabela `estabelecimentos` com aquele `slug` e carregará as cores, logotipos e catálogo daquele estúdio em tempo real.
+* **Estrutura por subcaminho:** `lashstudio.com.br/brunalash` (ou `agendar.meusite.com/estudio-rosa`)
+* **Estrutura por subdomínio:** `brunalash.lashstudio.com.br` (ou `estudio-rosa.meusite.com`)
+
+#### Como funciona o carregamento dinâmico:
+1. **Leitura da URL:** O React lê o parâmetro da URL (ex: `brunalash`).
+2. **Busca no Banco:** O React faz uma chamada rápida ao Supabase buscando a linha na tabela `estabelecimentos` com aquele `slug` (ex: `brunalash`).
+3. **Carregamento da Identidade:** O Supabase retorna os dados da profissional (ex: ID `uuid-da-bruna`, nome do negócio, cores de preferência, logotipo e catálogo de serviços).
+4. **Renderização:** A página de agendamento se adapta dinamicamente: os botões mudam para a cor do estúdio dela, o logo dela aparece no topo e apenas os serviços pertencentes ao seu ID são listados.
+
+#### Como funciona o cadastro e login das clientes da profissional:
+* **Opção A: Cadastro Rápido no Fluxo (Recomendado - Sem Senha):**
+  * A cliente entra na URL `lashstudio.com.br/brunalash`, escolhe o serviço e o horário.
+  * Na tela final, insere apenas **Nome**, **WhatsApp** e **E-mail** para confirmar.
+  * O sistema verifica se já existe uma cliente com aquele WhatsApp/E-mail vinculada ao estúdio da Bruna (`estabelecimento_id = uuid-da-bruna`). Se sim, associa o agendamento; se não, cria um novo registro de cliente sob o ID do estúdio.
+* **Opção B: Portal da Cliente Completo (Com Login/Senha):**
+  * O portal tem um botão "Entrar / Cadastrar" no topo.
+  * A cliente cria uma conta com e-mail e senha. Essa conta de cliente fica logicamente vinculada ao estúdio (`estabelecimento_id = uuid-da-bruna`).
+  * Permite que a cliente faça login para visualizar seu histórico de agendamentos e cancelar horários de forma autônoma.
+
+#### Como a profissional divulga o sistema:
+No painel de controle dela, haverá um botão simples **"Copiar meu Link de Agendamento"** (ex: `lashstudio.com.br/brunalash`). Ela poderá colar esse link na **Bio do Instagram** (ou Linktree), configurar como mensagem automática no **WhatsApp Business**, ou enviar diretamente para as clientes que solicitarem agendamentos.
 
 ---
 
