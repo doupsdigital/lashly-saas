@@ -240,7 +240,7 @@ export default function Faturamento() {
               {/* CARD PLANO BÁSICO */}
               <div className={`bg-white border rounded-2xl shadow-sm overflow-hidden flex flex-col justify-between ${!isPremium ? 'border-text-primary ring-2 ring-text-primary/10' : 'border-border'}`}>
                 <div>
-                  <div className="p-6 bg-gradient-to-tr from-gray-50 to-transparent border-b border-border">
+                  <div className="p-6 bg-gradient-to-tr from-rose-500/10 via-pink-500/5 to-transparent border-b border-border">
                     <h2 className="font-title font-bold text-lg text-text-primary flex items-center gap-2">
                       <Users className="w-5 h-5 text-text-secondary" />
                       Plano Básico (CRM)

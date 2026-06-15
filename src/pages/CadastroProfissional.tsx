@@ -231,6 +231,7 @@ export default function CadastroProfissional() {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowSenha(!showSenha)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-rose-600 cursor-pointer"
               >
@@ -259,6 +260,7 @@ export default function CadastroProfissional() {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowConfirmar(!showConfirmar)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-rose-600 cursor-pointer"
               >

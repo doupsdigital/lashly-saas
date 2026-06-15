@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { 
   Plus, 
@@ -19,8 +20,24 @@ interface ClienteWithAttendances extends Cliente {
   agendamentos?: { data_hora: string; status: string }[];
 }
 
+function applyPhoneMask(value: string): string {
+  const digits = value.replace(/\D/g, '').substring(0, 11);
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 7) return `(${digits.substring(0, 2)}) ${digits.substring(2)}`;
+  return `(${digits.substring(0, 2)}) ${digits.substring(2, 7)}-${digits.substring(7)}`;
+}
+
+function applyCpfMask(value: string): string {
+  const digits = value.replace(/\D/g, '').substring(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.substring(0, 3)}.${digits.substring(3)}`;
+  if (digits.length <= 9) return `${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6)}`;
+  return `${digits.substring(0, 3)}.${digits.substring(3, 6)}.${digits.substring(6, 9)}-${digits.substring(9)}`;
+}
+
 export default function Clientes() {
   const navigate = useNavigate();
+  const { estabelecimentoId } = useAuth();
   const [clientes, setClientes] = useState<ClienteWithAttendances[]>([]);
   const [portalClienteIds, setPortalClienteIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -161,11 +178,12 @@ export default function Clientes() {
     }
 
     try {
-      // 1. Check if WhatsApp is unique
+      // 1. Check if WhatsApp is unique within this establishment
       const { data: existing, error: checkError } = await supabase
         .from('clientes')
         .select('id')
         .eq('whatsapp', whatsapp)
+        .eq('estabelecimento_id', estabelecimentoId)
         .maybeSingle();
 
       if (checkError) throw checkError;
@@ -175,7 +193,7 @@ export default function Clientes() {
         return;
       }
 
-      // 2. Insert new client
+      // 2. Insert new client with establishment_id
       const clientPayload = {
         nome,
         sobrenome,
@@ -184,6 +202,7 @@ export default function Clientes() {
         data_nascimento: dataNascimento || null,
         cpf: cpf.trim() || null,
         endereco: endereco.trim() || null,
+        estabelecimento_id: estabelecimentoId,
       };
 
       const { data: newClient, error: insertError } = await supabase
@@ -267,7 +286,7 @@ export default function Clientes() {
   return (
     <div className="space-y-6">
       {/* Floating Toast for Errors */}
-      {errorMessage && (
+      {errorMessage && !isModalOpen && (
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] w-full max-w-lg px-4 pointer-events-none">
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center gap-3 shadow-lg animate-fade-in pointer-events-auto">
             <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600" />
@@ -500,6 +519,12 @@ export default function Clientes() {
             </div>
             
             <form onSubmit={handleSave} className="p-6 space-y-5 overflow-y-auto flex-1">
+              {errorMessage && (
+                <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-start gap-2.5 mb-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600 mt-0.5" />
+                  <p className="text-xs font-medium leading-relaxed">{errorMessage}</p>
+                </div>
+              )}
               {/* Mandatory Fields */}
               <div className="space-y-4">
                 <p className="text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border pb-1">Dados Obrigatórios</p>
@@ -541,9 +566,9 @@ export default function Clientes() {
                   <input 
                     type="text" 
                     required
-                    placeholder="Ex: (11) 99999-9999 (apenas números)"
+                    placeholder="Ex: (11) 99999-9999"
                     value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value.replace(/\D/g, ''))} // Save numbers only
+                    onChange={(e) => setWhatsapp(applyPhoneMask(e.target.value))}
                     className="w-full px-3 py-2 border border-border rounded-lg bg-bg text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-rose-400"
                   />
                 </div>
@@ -589,7 +614,7 @@ export default function Clientes() {
                       type="text" 
                       placeholder="000.000.000-00"
                       value={cpf}
-                      onChange={(e) => setCpf(e.target.value)}
+                      onChange={(e) => setCpf(applyCpfMask(e.target.value))}
                       className="w-full px-3 py-2 border border-border rounded-lg bg-bg text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-rose-400"
                     />
                   </div>
