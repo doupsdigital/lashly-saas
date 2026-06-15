@@ -34,6 +34,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('[AuthContext] onAuthStateChange event:', _event, 'session user:', session?.user?.email);
       if (!session?.user) {
         setUser(null);
         setProfile(null);
@@ -47,14 +48,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session.user);
       setLoading(true);
 
-      const { data } = await supabase
-        .from('usuarios')
-        .select('*, estabelecimentos(plano, status_assinatura, slug)')
-        .eq('id', session.user.id)
-        .maybeSingle();
+      let data = null;
+      let error = null;
+
+      const fetchProfile = async () => {
+        return await supabase
+          .from('usuarios')
+          .select('*, estabelecimentos(plano, status_assinatura, slug)')
+          .eq('id', session.user.id)
+          .maybeSingle();
+      };
+
+      let res = await fetchProfile();
+      data = res.data;
+      error = res.error;
+
+      if (!data) {
+        console.warn('[AuthContext] Profile not found on first attempt, retrying in 150ms...', error);
+        await new Promise(resolve => setTimeout(resolve, 150));
+        res = await fetchProfile();
+        data = res.data;
+        error = res.error;
+      }
 
       const profileData = data as any;
+      console.log('[AuthContext] Profile query result for', session.user.email, ':', profileData);
       if (!profileData) {
+        console.warn('[AuthContext] No profile found for', session.user.email, 'signing out. Error:', error);
         // Usuário autenticado mas sem registro em usuarios → logout automático
         await supabase.auth.signOut();
         return;

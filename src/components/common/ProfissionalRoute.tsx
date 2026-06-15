@@ -21,11 +21,18 @@ export default function ProfissionalRoute({ children }: { children: React.ReactN
     );
   }
 
-  if (!user) return <Navigate to="/login" replace />;
+  console.log('[ProfissionalRoute] Render - user:', user?.email, 'isProfissional:', isProfissional, 'loading:', loading);
+
+  if (!user) {
+    console.log('[ProfissionalRoute] No user found, navigating to /login');
+    return <Navigate to="/login" replace />;
+  }
   if (!isProfissional) {
     if (estabelecimentoSlug) {
+      console.log('[ProfissionalRoute] User is not pro, redirecting to client portal:', estabelecimentoSlug);
       return <Navigate to={`/portal/${estabelecimentoSlug}/catalogo`} replace />;
     }
+    console.log('[ProfissionalRoute] User is not pro and no slug, navigating to /login');
     return <Navigate to="/login" replace />;
   }
 

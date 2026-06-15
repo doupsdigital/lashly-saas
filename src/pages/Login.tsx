@@ -16,13 +16,18 @@ export default function Login() {
     if (!authLoading && !user) setSubmitting(false);
   }, [authLoading, user]);
 
+  console.log('[Login] Render - user:', user?.email, 'authLoading:', authLoading, 'isProfissional:', isProfissional, 'estabelecimentoSlug:', estabelecimentoSlug);
+
   // Redireciona usuário já autenticado
   if (!authLoading && user) {
     if (isProfissional) {
+      console.log('[Login] Redirecting professional to /dashboard');
       return <Navigate to="/dashboard" replace />;
     } else if (estabelecimentoSlug) {
+      console.log('[Login] Redirecting client to portal:', estabelecimentoSlug);
       return <Navigate to={`/portal/${estabelecimentoSlug}/catalogo`} replace />;
     } else {
+      console.warn('[Login] Logged in but isProfissional is false and no slug found - redirecting back to /login');
       return <Navigate to="/login" replace />;
     }
   }
