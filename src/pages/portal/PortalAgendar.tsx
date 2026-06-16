@@ -253,7 +253,23 @@ export default function PortalAgendar() {
               .filter(s => s.categoria_id === cat.id)
               .map(s => ({ ...s, variacoes: variacoes.filter(v => v.servico_id === s.id) })),
           }))
-          .filter(cat => cat.servicos.length > 0);
+          .filter(cat => cat.servicos.length > 0)
+          .sort((a, b) => {
+            const nameA = a.nome.toLowerCase().trim();
+            const nameB = b.nome.toLowerCase().trim();
+            
+            const isCiliosA = nameA.includes('extensão de cílios') || nameA.includes('extensão de cilios');
+            const isCiliosB = nameB.includes('extensão de cílios') || nameB.includes('extensão de cilios');
+            const isSobrancelhasA = nameA.includes('design de sobrancelhas');
+            const isSobrancelhasB = nameB.includes('design de sobrancelhas');
+
+            if (isCiliosA && !isCiliosB) return -1;
+            if (!isCiliosA && isCiliosB) return 1;
+            if (isSobrancelhasA && !isSobrancelhasB) return 1;
+            if (!isSobrancelhasA && isSobrancelhasB) return -1;
+            
+            return nameA.localeCompare(nameB);
+          });
 
         setCategorias(mapped);
 

@@ -101,8 +101,26 @@ export default function Servicos() {
 
       if (servError) throw servError;
 
+      // Sort categories: "Extensão de Cílios" first, "Design de Sobrancelhas" last, others alphabetically
+      const sortedCats = (catData || []).sort((a, b) => {
+        const nameA = a.nome.toLowerCase().trim();
+        const nameB = b.nome.toLowerCase().trim();
+        
+        const isCiliosA = nameA.includes('extensão de cílios') || nameA.includes('extensão de cilios');
+        const isCiliosB = nameB.includes('extensão de cílios') || nameB.includes('extensão de cilios');
+        const isSobrancelhasA = nameA.includes('design de sobrancelhas');
+        const isSobrancelhasB = nameB.includes('design de sobrancelhas');
+
+        if (isCiliosA && !isCiliosB) return -1;
+        if (!isCiliosA && isCiliosB) return 1;
+        if (isSobrancelhasA && !isSobrancelhasB) return 1;
+        if (!isSobrancelhasA && isSobrancelhasB) return -1;
+        
+        return nameA.localeCompare(nameB);
+      });
+
       // Match services to categories
-      const mapped: CategoriaWithRelations[] = (catData || []).map(cat => ({
+      const mapped: CategoriaWithRelations[] = sortedCats.map(cat => ({
         ...cat,
         servicos: (servData || [])
           .filter(s => s.categoria_id === cat.id)
@@ -704,7 +722,7 @@ export default function Servicos() {
                 <input 
                   type="text" 
                   required
-                  placeholder="Ex: Limpeza de Pele Profunda"
+                  placeholder="Volume Brasileiro - Aplicação"
                   value={servicoNome}
                   onChange={(e) => setServicoNome(e.target.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-bg text-text-primary text-sm focus:outline-none focus:ring-1 focus:ring-rose-400 placeholder:text-text-muted"
