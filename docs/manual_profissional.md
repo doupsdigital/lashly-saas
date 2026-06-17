@@ -256,36 +256,44 @@ Caso sua assinatura fique suspensa por falta de pagamento, o sistema exibirá um
 
 ## 9. Prompts de Apoio (Vídeos e Marketing)
 
-Copie e cole os textos abaixo nas suas ferramentas de IA favoritas (ChatGPT, Claude, Gemini) para gerar os materiais de marketing e treinamento do LashCenter.
+Copie e cole os textos abaixo nas suas ferramentas de IA favoritas (ChatGPT, Claude, Gemini) para gerar os materiais de marketing e treinamento do LashHub.
 
 ### Prompt A: Roteiro para Vídeo de Demonstração (YouTube/Instagram)
 ```text
-Com base no manual do LashCenter para profissionais de cílios e estética, crie um roteiro de vídeo narrado de 3 minutos. O vídeo deve mostrar a tela do sistema.
+Com base no manual do LashHub para profissionais de cílios e estética, crie um roteiro de vídeo narrado de 3 minutos. O vídeo deve mostrar a tela do sistema.
 O roteiro deve conter:
 1. Uma introdução chamativa focando na dor da profissional ("Cansada de passar horas respondendo cliente no WhatsApp para marcar horário?").
-2. Demonstração prática do painel: configurando o estúdio, cadastrando um serviço de Extensão de Cílios e ajustando os horários de trabalho.
-3. Demonstração de como a cliente agenda em segundos pelo portal.
-4. Conclusão mostrando o ganho de tempo, aumento de faturamento que aparece no dashboard e chamada para ação para assinar o LashCenter.
+2. Demonstração prática do painel: cadastrando uma cliente com ficha de anamnese, criando um serviço de Extensão de Cílios e configurando os horários de trabalho em Meus Horários.
+3. Demonstração de como a cliente acessa o portal exclusivo do estúdio, escolhe o serviço, seleciona o horário disponível e agenda em segundos.
+4. Demonstração do painel de agendamentos: aprovando um agendamento pendente, concluindo um atendimento e visualizando as métricas no Dashboard.
+5. Conclusão destacando o ganho de tempo, o controle financeiro pelo dashboard e chamada para ação para assinar o LashHub (Plano Básico R$ 59,90/mês ou Premium R$ 99,90/mês).
 Use uma linguagem leve, dinâmica, feminina e profissional.
 ```
 
 ### Prompt B: Copy para Página de Vendas (Landing Page)
 ```text
-Atue como um Copywriter especialista em lançamentos de ferramentas SaaS. Escreva os textos estruturados de uma página de vendas para o "LashCenter".
+Atue como um Copywriter especialista em lançamentos de ferramentas SaaS. Escreva os textos estruturados de uma página de vendas para o "LashHub".
 A página de vendas deve ter:
 - Headline chamativa conectando controle de agenda + aumento de faturamento.
-- Sub-headline focando na liberdade de ter um robô agendando para você 24h por dia.
-- Sessão de "Dores Comuns" (clientes que desistem por demora no atendimento, agenda confusa no papel, esquecimento de horários).
-- Sessão de Recursos (Portal de agendamento, Ficha de Anamnese com histórico e métricas, Dashboard financeiro profissional, Bloqueio inteligente de horários).
-- Tabela comparativa de planos: Básico (apenas gestão de fichas) e Profissional/Premium (agenda e portal).
+- Sub-headline focando na liberdade de ter um portal agendando para você 24h por dia, sem precisar responder WhatsApp.
+- Sessão de "Dores Comuns" (clientes que desistem por demora no atendimento, agenda confusa no papel, esquecimento de horários, falta de histórico das clientes).
+- Sessão de Recursos com base nas funcionalidades reais do sistema:
+  * Portal de agendamento online com link exclusivo do estúdio
+  * Ficha clínica de anamnese completa com histórico de atendimentos
+  * Dashboard financeiro com gráficos de receita, serviços mais realizados e clientes novas vs recorrentes
+  * Calendário com visualização mensal, semanal e diária
+  * Bloqueios de agenda para férias, feriados e horários indisponíveis
+  * Aprovação manual ou automática de agendamentos
+  * Registro de faltas (no-show) no histórico da cliente
+- Tabela comparativa de planos: Básico CRM (R$ 59,90/mês — gestão de clientes e fichas) e Premium Agenda (R$ 99,90/mês — tudo do básico mais portal e agenda completa).
 - Seção de FAQ (Perguntas Frequentes) curta.
 ```
 
 ### Prompt C: Mensagem de Lançamento da Agenda para Clientes (WhatsApp)
 ```text
-Crie 3 modelos de mensagens de WhatsApp para a profissional enviar para sua lista de clientes anunciando que agora ela usa o LashCenter e que as clientes podem agendar sozinhas.
+Crie 3 modelos de mensagens de WhatsApp para a profissional enviar para sua lista de clientes anunciando que agora ela usa o LashHub e que as clientes podem agendar sozinhas pelo portal online.
 Modelo 1: Mensagem curta e direta para clientes recorrentes.
-Modelo 2: Mensagem detalhada com benefícios (ex: ver todos os horários de madrugada, escolher o serviço preferido).
+Modelo 2: Mensagem detalhada com benefícios (ex: ver todos os horários disponíveis, escolher o serviço, agendar a qualquer hora do dia ou da noite).
 Modelo 3: Mensagem de incentivo (ex: "Agende seu primeiro horário pelo portal e ganhe um mimo/desconto no dia do atendimento").
 Deixe espaços demarcados como [Link do Portal] e [Nome da Cliente] para substituição de dados.
 ```
