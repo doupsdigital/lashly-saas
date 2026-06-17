@@ -7,7 +7,7 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 export default function PortalLogin() {
   const navigate = useNavigate();
   const { user, isCliente, loading: authLoading, signIn } = useAuth();
-  const { nomeNegocio, logoUrl, slug, loading: portalLoading } = usePortal();
+  const { slug, loading: portalLoading } = usePortal();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -56,26 +56,19 @@ export default function PortalLogin() {
     );
   }
 
-  const initials = (nomeNegocio || 'Studio')
-    .split(' ')
-    .map((n) => n[0] || '')
-    .join('')
-    .substring(0, 2)
-    .toUpperCase();
-
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-8 relative overflow-hidden font-sans">
       <div className="w-full max-w-[420px] bg-white border border-border rounded-[20px] shadow-xl p-8 md:p-10 relative z-10 animate-fade-in">
         <div className="flex flex-col items-center text-center mb-8">
-          {logoUrl ? (
-            <img src={logoUrl} alt={nomeNegocio || 'Studio'} className="h-16 w-auto object-contain mb-4" />
-          ) : (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center font-title font-semibold text-3xl shadow-lg mb-4 hover:scale-105 transition-transform duration-300">
-              {initials}
-            </div>
-          )}
-          <h1 className="font-title font-bold text-3xl tracking-tight text-text-primary">
-            {nomeNegocio}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-lg mb-4 hover:scale-105 transition-transform duration-300 overflow-hidden">
+            <img
+              src="/logo-login.png"
+              alt="Lash Hub"
+              className="w-[110%] h-[110%] object-contain invert mix-blend-screen scale-130"
+            />
+          </div>
+          <h1 className="font-title font-bold text-3xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-rose-400">
+            Lash Hub
           </h1>
           <p className="text-xs text-text-muted mt-2 uppercase tracking-wider font-medium">
             Acesse sua conta de cliente
