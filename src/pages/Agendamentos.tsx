@@ -1166,7 +1166,7 @@ export default function Agendamentos() {
                             ${isAvailable ? 'hover:bg-rose-50/30' : 'bg-gray-100/55 cursor-not-allowed text-text-muted/40 font-semibold text-[10px]'}`}
                           title={isAvailable ? 'Clique para agendar' : 'Horário indisponível / Fechado'}
                         >
-                          {!isAvailable && '🔒'}
+                          {!isAvailable && minute === 0 && '🔒'}
                         </div>
                       );
                     })}
@@ -1242,7 +1242,7 @@ export default function Agendamentos() {
                       ${minute === 30 ? 'border-b border-border/50' : ''}
                       ${isAvailable ? 'hover:bg-rose-50/30' : 'bg-gray-100/55 cursor-not-allowed text-text-muted/40'}`}
                   >
-                    {!isAvailable && '🔒 Indisponível'}
+                    {!isAvailable && minute === 0 && '🔒'}
                   </div>
                 );
               })}
