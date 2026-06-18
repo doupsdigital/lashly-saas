@@ -195,7 +195,7 @@ export default function PortalCatalogo() {
     setLoading(true);
     setError(false);
     try {
-      const [catResult, servResult, varResult] = await Promise.all([
+      const [catResult, servResult] = await Promise.all([
         supabase
           .from('categorias_servico')
           .select('*')
@@ -203,19 +203,16 @@ export default function PortalCatalogo() {
           .order('ordem', { ascending: true }),
         supabase
           .from('servicos')
-          .select('*')
+          .select('*, variacoes_servico(*)')
           .eq('estabelecimento_id', establishmentId)
           .eq('ativo', true)
           .order('nome', { ascending: true }),
-        supabase.from('variacoes_servico').select('*'),
       ]);
 
       if (catResult.error) throw catResult.error;
       if (servResult.error) throw servResult.error;
-      if (varResult.error) throw varResult.error;
 
       const servicos = servResult.data || [];
-      const variacoes = varResult.data || [];
 
       const mapped: CategoriaComServicos[] = (catResult.data || [])
         .map(cat => ({
@@ -224,7 +221,7 @@ export default function PortalCatalogo() {
             .filter(s => s.categoria_id === cat.id)
             .map(s => ({
               ...s,
-              variacoes: variacoes.filter(v => v.servico_id === s.id),
+              variacoes: (s as any).variacoes_servico || [],
             })),
         }))
         .filter(cat => cat.servicos.length > 0)
