@@ -28,6 +28,7 @@ import PlanGuard from './components/common/PlanGuard';
 import BillingGuard from './components/common/BillingGuard';
 import Faturamento from './pages/Faturamento';
 import InstallBanner from './components/common/InstallBanner';
+import SplashScreen from './components/common/SplashScreen';
 
 export default function App() {
   useEffect(() => {
@@ -75,6 +76,7 @@ export default function App() {
 
   return (
     <AuthProvider>
+      <SplashScreen />
       <InstallBanner />
       <BrowserRouter>
         <Routes>
