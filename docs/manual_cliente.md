@@ -38,7 +38,7 @@ Você pode navegar livremente pelo catálogo para ver os serviços disponíveis,
 Para garantir a segurança da sua vaga e permitir que a profissional entre em contato com você, é necessário criar uma conta rápida antes de confirmar o primeiro agendamento.
 
 ### Passo a Passo para se Cadastrar:
-1. Clique em **Entrar** no topo do portal e, em seguida, em **Criar Conta**.
+1. Clique em **Entrar** no topo do portal e, em seguida, em **Cadastre-se aqui**.
 2. Preencha seus dados:
    * **Nome**: Seu primeiro nome.
    * **Sobrenome**: Seu sobrenome.
