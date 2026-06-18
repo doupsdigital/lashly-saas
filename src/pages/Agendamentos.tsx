@@ -587,7 +587,8 @@ export default function Agendamentos() {
             duracao_minutos: formDuracao,
             observacoes: formObs.trim() || null
           })
-          .eq('id', editingAppt.id);
+          .eq('id', editingAppt.id)
+          .eq('estabelecimento_id', estabelecimentoId);
 
         if (error) throw error;
         apptId = editingAppt.id;
@@ -684,7 +685,8 @@ export default function Agendamentos() {
       const { error } = await supabase
         .from('agendamentos')
         .update({ status: 'cancelado' })
-        .eq('id', appt.id);
+        .eq('id', appt.id)
+        .eq('estabelecimento_id', estabelecimentoId);
       if (error) throw error;
       await registrarLog('editou', 'agendamento', appt.id, `Recusou agendamento de "${clientName}"`);
       setRejectModalAppt(null);
@@ -721,7 +723,8 @@ export default function Agendamentos() {
       const { error } = await supabase
         .from('agendamentos')
         .update({ status: 'confirmado' })
-        .eq('id', appt.id);
+        .eq('id', appt.id)
+        .eq('estabelecimento_id', estabelecimentoId);
       if (error) throw error;
       const clientName = appt.cliente ? `${appt.cliente.nome} ${appt.cliente.sobrenome}` : 'Cliente';
       await registrarLog('editou', 'agendamento', appt.id, `Confirmou agendamento de "${clientName}"`);
@@ -760,7 +763,8 @@ export default function Agendamentos() {
       const { error } = await supabase
         .from('agendamentos')
         .update({ status: 'concluido', valor_cobrado: valorFinal })
-        .eq('id', appt.id);
+        .eq('id', appt.id)
+        .eq('estabelecimento_id', estabelecimentoId);
 
       if (error) throw error;
 
@@ -803,7 +807,8 @@ export default function Agendamentos() {
           const { error } = await supabase
             .from('agendamentos')
             .update({ status: newStatus })
-            .eq('id', appt.id);
+            .eq('id', appt.id)
+            .eq('estabelecimento_id', estabelecimentoId);
 
           if (error) throw error;
 
@@ -840,7 +845,8 @@ export default function Agendamentos() {
           const { error } = await supabase
             .from('agendamentos')
             .delete()
-            .eq('id', appt.id);
+            .eq('id', appt.id)
+            .eq('estabelecimento_id', estabelecimentoId);
 
           if (error) throw error;
 
@@ -871,7 +877,8 @@ export default function Agendamentos() {
           const { error } = await supabase
             .from('agendamentos')
             .update({ status: 'falta' })
-            .eq('id', appt.id);
+            .eq('id', appt.id)
+            .eq('estabelecimento_id', estabelecimentoId);
           if (error) throw error;
           await registrarLog('editou', 'agendamento', appt.id, `Registrou falta de "${clientName}" no agendamento`);
           setIsDetailOpen(false);
