@@ -67,37 +67,21 @@ export default function CadastroCliente() {
         throw new Error('Estabelecimento não carregado.');
       }
 
-      // Passo 1 — Criar usuário no Auth PRIMEIRO para evitar registro órfão em clientes
-      // se o e-mail já estiver cadastrado ou outro erro de auth ocorrer.
-      const clientId = crypto.randomUUID();
+      // Passo 1 — Verificar se e-mail já está cadastrado antes de criar qualquer registro
+      const { data: existingUser } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('email', form.email.trim().toLowerCase())
+        .maybeSingle();
 
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: form.email.trim().toLowerCase(),
-        password: form.senha,
-        options: {
-          data: {
-            nome: `${form.nome.trim()} ${form.sobrenome.trim()}`,
-            role: 'cliente',
-            cliente_id: clientId,
-            estabelecimento_id: establishmentId
-          }
-        }
-      });
-
-      if (authError) {
-        const msg = authError.message.toLowerCase();
-        if (msg.includes('already registered') || msg.includes('already been registered')) {
-          throw new Error('Este e-mail já está cadastrado.');
-        }
-        if (msg.includes('rate limit') || authError.status === 429) {
-          throw new Error('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.');
-        }
-        throw new Error('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      if (existingUser) {
+        throw new Error('Este e-mail já está cadastrado.');
       }
 
-      if (!authData.user) throw new Error('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      // Passo 2 — Inserir clientes ANTES do auth.signUp porque a trigger
+      // handle_new_user_onboarding precisa do registro em clientes para criar usuarios.
+      const clientId = crypto.randomUUID();
 
-      // Passo 2 — Auth criado com sucesso: inserir registro em clientes
       const { error: clientError } = await supabase
         .from('clientes')
         .insert({
@@ -113,7 +97,40 @@ export default function CadastroCliente() {
         throw new Error(`Erro ao registrar dados do cliente: ${clientError.message}`);
       }
 
-      // Passo 3 — Login automático
+      // Passo 3 — Criar usuário no Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email.trim().toLowerCase(),
+        password: form.senha,
+        options: {
+          data: {
+            nome: `${form.nome.trim()} ${form.sobrenome.trim()}`,
+            role: 'cliente',
+            cliente_id: clientId,
+            estabelecimento_id: establishmentId
+          }
+        }
+      });
+
+      if (authError) {
+        // Rollback: remove o registro de clientes criado no passo anterior
+        await supabase.from('clientes').delete().eq('id', clientId);
+
+        const msg = authError.message.toLowerCase();
+        if (msg.includes('already registered') || msg.includes('already been registered')) {
+          throw new Error('Este e-mail já está cadastrado.');
+        }
+        if (msg.includes('rate limit') || authError.status === 429) {
+          throw new Error('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.');
+        }
+        throw new Error('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      }
+
+      if (!authData.user) {
+        await supabase.from('clientes').delete().eq('id', clientId);
+        throw new Error('Ocorreu um erro ao criar sua conta. Tente novamente.');
+      }
+
+      // Passo 4 — Login automático
       await supabase.auth.signInWithPassword({
         email: form.email.trim().toLowerCase(),
         password: form.senha,
