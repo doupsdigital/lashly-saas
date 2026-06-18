@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import {
   ArrowLeft,
   User,
@@ -58,6 +59,7 @@ function applyCpfMask(value: string): string {
 
 export default function PerfilCliente() {
   const { id } = useParams<{ id: string }>();
+  const { estabelecimentoId } = useAuth();
   const [activeTab, setActiveTab] = useState<'dados' | 'anamnese' | 'historico'>('dados');
   
   // Data States
@@ -126,14 +128,15 @@ export default function PerfilCliente() {
 
 
   const fetchClienteData = async () => {
-    if (!id) return;
+    if (!id || !estabelecimentoId) return;
     setLoading(true);
     try {
-      // 1. Fetch client info
+      // 1. Fetch client info — validando que pertence ao estabelecimento logado
       const { data: clientData, error: clientError } = await supabase
         .from('clientes')
         .select('*')
         .eq('id', id)
+        .eq('estabelecimento_id', estabelecimentoId)
         .single();
 
       if (clientError) throw clientError;
