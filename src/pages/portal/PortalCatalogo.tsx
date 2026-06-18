@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Tag, Calendar, AlertCircle, Sparkles, RefreshCw, MessageSquare } from 'lucide-react';
+import { Clock, Tag, Calendar, AlertCircle, Sparkles, RefreshCw, MessageSquare, ChevronDown, HelpCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { CategoriaServico, Servico, VariacaoServico } from '../../types';
 import { usePortal } from '../../contexts/PortalContext';
@@ -24,6 +24,29 @@ function formatDuracao(minutos: number): string {
 function formatValor(valor: number): string {
   return `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 }
+
+const FAQ_ITEMS = [
+  {
+    pergunta: 'Quais formas de pagamento são aceitas?',
+    resposta: 'O portal serve para reservar o seu horário e garantir a sua vaga na agenda da profissional. O pagamento é feito diretamente no estúdio no dia do atendimento (dinheiro, Pix, cartão, etc.), salvo combinação prévia com a profissional.',
+  },
+  {
+    pergunta: 'O que acontece se eu me atrasar?',
+    resposta: 'Cada profissional define seu próprio tempo de tolerância. Se se atrasar, entre em contato imediatamente com ela via WhatsApp.',
+  },
+  {
+    pergunta: 'Como eu sei se meu agendamento foi aprovado?',
+    resposta: 'Na aba Meus Agendamentos, o status exibirá Confirmado (horário garantido) ou Pendente (aguardando aprovação da profissional).',
+  },
+  {
+    pergunta: 'Por que o botão de cancelar sumiu?',
+    resposta: 'O cancelamento online só é permitido com uma antecedência mínima definida pela profissional (ex: 24h antes). Se o prazo já passou, entre em contato diretamente com ela.',
+  },
+  {
+    pergunta: 'Não consigo agendar online, só aparece um botão de WhatsApp. Por quê?',
+    resposta: 'Isso significa que o estúdio utiliza o agendamento via WhatsApp. Entre em contato com a profissional pelo botão exibido no portal para solicitar seu horário.',
+  },
+];
 
 function SkeletonCard() {
   return (
@@ -163,6 +186,7 @@ export default function PortalCatalogo() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [categoriaAtiva, setCategoriaAtiva] = useState<string>('todas');
+  const [faqAberto, setFaqAberto] = useState<number | null>(null);
 
   const isBasico = plano === 'basico';
 
@@ -287,7 +311,16 @@ export default function PortalCatalogo() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-title font-bold text-3xl text-text-primary">Nossos Serviços</h1>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-title font-bold text-3xl text-text-primary">Nossos Serviços</h1>
+        <button
+          onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border text-text-secondary hover:text-rose-600 hover:border-rose-300 text-xs font-medium transition-colors cursor-pointer shrink-0"
+        >
+          <HelpCircle className="w-4 h-4" />
+          Dúvidas?
+        </button>
+      </div>
 
       {/* WhatsApp banner if studio is on basic plan */}
       {isBasico && (
@@ -365,6 +398,34 @@ export default function PortalCatalogo() {
           </section>
         ))}
       </div>
+
+      {/* Dúvidas Frequentes */}
+      <section id="faq" className="pt-4 border-t border-border">
+        <div className="flex items-center gap-2 mb-4">
+          <HelpCircle className="w-5 h-5 text-rose-500" />
+          <h2 className="font-title font-semibold text-xl text-text-primary">Dúvidas Frequentes</h2>
+        </div>
+        <div className="space-y-2">
+          {FAQ_ITEMS.map((item, i) => (
+            <div key={i} className="bg-white border border-border rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setFaqAberto(faqAberto === i ? null : i)}
+                className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left cursor-pointer hover:bg-rose-50/40 transition-colors"
+              >
+                <span className="font-medium text-sm text-text-primary">{item.pergunta}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-rose-400 shrink-0 transition-transform duration-200 ${faqAberto === i ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {faqAberto === i && (
+                <div className="px-5 pb-4 pt-3 text-sm text-text-secondary leading-relaxed border-t border-border">
+                  {item.resposta}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }
