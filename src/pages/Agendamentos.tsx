@@ -951,7 +951,9 @@ export default function Agendamentos() {
   };
 
   const visibleAppointments = agendamentos;
-  const pendingAppts = agendamentos.filter(a => a.status === 'pendente');
+  const pendingAppts = agendamentos
+    .filter(a => a.status === 'pendente')
+    .sort((a, b) => new Date(a.data_hora).getTime() - new Date(b.data_hora).getTime());
 
   useEffect(() => {
     if (pendingAppts.length > 0) setPendingOpen(true);
