@@ -15,7 +15,7 @@ function applyPhoneMask(value: string): string {
 
 export default function CadastroCliente() {
   const navigate = useNavigate();
-  const { establishmentId, nomeNegocio, slug } = usePortal();
+  const { establishmentId, slug } = usePortal();
   const [form, setForm] = useState({
     nome: '',
     sobrenome: '',
@@ -28,7 +28,7 @@ export default function CadastroCliente() {
   const [showConfirmar, setShowConfirmar] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [successModal, setSuccessModal] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -120,8 +120,7 @@ export default function CadastroCliente() {
         password: form.senha,
       });
 
-      setSuccess(true);
-      setTimeout(() => navigate(`/portal/${slug}/catalogo`, { replace: true }), 1500);
+      setSuccessModal(true);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Ocorreu um erro ao criar sua conta. Tente novamente.');
       setSubmitting(false);
@@ -138,13 +137,17 @@ export default function CadastroCliente() {
 
       <div className="w-full max-w-[460px] bg-white border border-border rounded-[20px] shadow-xl p-8 md:p-10 relative z-10 animate-fade-in">
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-14 h-14 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-title font-semibold text-3xl shadow-md mb-4 hover:scale-105 transition-transform duration-300">
-            {nomeNegocio ? nomeNegocio[0]?.toUpperCase() : 'S'}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-rose-600 to-rose-400 text-white flex items-center justify-center shadow-lg mb-4 hover:scale-105 transition-transform duration-300 overflow-hidden">
+            <img
+              src="/logo-login.png"
+              alt="Lash Hub"
+              className="w-[110%] h-[110%] object-contain invert mix-blend-screen scale-130"
+            />
           </div>
-          <h2 className="font-title font-bold text-3xl text-text-primary tracking-wide">
-            {nomeNegocio}
+          <h2 className="font-title font-bold text-3xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-rose-400">
+            Lash Hub
           </h2>
-          <p className="text-xs text-text-secondary mt-1 uppercase tracking-widest font-medium">
+          <p className="text-xs text-text-muted mt-2 uppercase tracking-wider font-medium">
             Criar sua conta
           </p>
         </div>
@@ -153,13 +156,6 @@ export default function CadastroCliente() {
           <div className="mb-6 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl flex items-start gap-2.5">
             <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-600 mt-0.5" />
             <p className="text-xs font-medium leading-relaxed">{errorMsg}</p>
-          </div>
-        )}
-
-        {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl flex items-start gap-2.5">
-            <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-green-600 mt-0.5" />
-            <p className="text-xs font-medium leading-relaxed">Cadastro realizado com sucesso! Bem-vinda 🎉</p>
           </div>
         )}
 
@@ -246,6 +242,7 @@ export default function CadastroCliente() {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowSenha(!showSenha)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-rose-600 cursor-pointer"
               >
@@ -271,6 +268,7 @@ export default function CadastroCliente() {
               />
               <button
                 type="button"
+                tabIndex={-1}
                 onClick={() => setShowConfirmar(!showConfirmar)}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-rose-600 cursor-pointer"
               >
@@ -281,7 +279,7 @@ export default function CadastroCliente() {
 
           <button
             type="submit"
-            disabled={submitting || success}
+            disabled={submitting}
             className="w-full py-3 bg-rose-600 hover:bg-rose-800 disabled:bg-rose-400 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-md hover:shadow-lg flex items-center justify-center cursor-pointer mt-2"
           >
             {submitting ? (
@@ -299,6 +297,26 @@ export default function CadastroCliente() {
           </Link>
         </p>
       </div>
+
+      {successModal && (
+        <div className="fixed inset-0 bg-black/45 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-[14px] border border-border shadow-xl w-full max-w-sm p-6 text-center animate-slide-up space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-green-50 border border-green-200 flex items-center justify-center text-green-600">
+              <CheckCircle2 className="w-9 h-9" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary">Cadastro realizado!</h3>
+              <p className="text-sm text-text-secondary mt-1">Bem-vinda! Sua conta foi criada com sucesso.</p>
+            </div>
+            <button
+              onClick={() => navigate(`/portal/${slug}/catalogo`, { replace: true })}
+              className="w-full py-2.5 bg-rose-600 hover:bg-rose-800 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-md cursor-pointer"
+            >
+              Concluir e Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
