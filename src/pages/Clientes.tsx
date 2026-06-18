@@ -86,6 +86,7 @@ export default function Clientes() {
         supabase
           .from('clientes')
           .select('*, atendimentos(data_atendimento), agendamentos(data_hora, status)')
+          .eq('estabelecimento_id', estabelecimentoId)
           .order('nome', { ascending: true }),
         supabase
           .from('usuarios')
