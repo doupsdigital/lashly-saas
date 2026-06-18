@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Usuario } from '../types';
+import { setCurrentUsuarioNome } from '../utils/log';
 
 interface AuthContextType {
   user: User | null;
@@ -93,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(profileData);
+      setCurrentUsuarioNome(profileData.nome ?? 'Usuário');
       setEstabelecimentoId(profileData.estabelecimento_id ?? null);
       setPlano(profileData.estabelecimentos?.plano ?? 'basico');
       setStatusAssinatura(profileData.estabelecimentos?.status_assinatura ?? 'trial');
@@ -127,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const profileData = data as any;
     if (profileData) {
       setProfile(profileData);
+      setCurrentUsuarioNome(profileData.nome ?? 'Usuário');
       setEstabelecimentoId(profileData.estabelecimento_id ?? null);
       setPlano(profileData.estabelecimentos?.plano ?? 'basico');
       setStatusAssinatura(profileData.estabelecimentos?.status_assinatura ?? 'trial');
